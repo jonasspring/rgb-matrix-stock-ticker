@@ -1,0 +1,1 @@
+{"pixel_shape": [64, 32], "brightness": 40, "app_change_freq": 50, "stock_app": {"stocks": ["MSFT", "GOOGL", "AAPL"], "period": "1mo", "fetch_interval": 900, "graph_height": 15, "change_interval_sec": 10}}
