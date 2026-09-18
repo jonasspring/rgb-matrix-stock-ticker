@@ -156,10 +156,17 @@ class StockApp(BaseApp):
             prices_pixels = (np.round((prices_graph - min_price)/(max_price - min_price) * self.config["graph_height"])).astype(int)
 
         for idx in range(len(prices_pixels)):
-            draw.line([[idx, y_graph_max], [idx, y_graph_max + 1 - prices_pixels[idx]]], fill=(0,75,0))
+            x = int(idx)
+            y1 = int(y_graph_max)
+            y2 = int(y_graph_max + 1 - prices_pixels[idx])
+            draw.line([[x, y1], [x, y2]], fill=(0,75,0))
 
         for idx in range(len(prices_pixels) - 1):
-            draw.line([[idx, y_graph_max - prices_pixels[idx]], [idx + 1, y_graph_max - prices_pixels[idx + 1]]], fill=trend_color)
+            x1 = int(idx)
+            y1 = int(y_graph_max - prices_pixels[idx])
+            x2 = int(idx + 1)
+            y2 = int(y_graph_max - prices_pixels[idx + 1])
+            draw.line([(x1, y1), (x2, y2)], fill=trend_color)
 
         return img
 
