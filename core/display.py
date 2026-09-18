@@ -6,7 +6,7 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 class DisplayManager(object):
     def __init__(self, config):
 
-        self.options = self._get_options(self, config)
+        self.options = self._get_options(config)
 
         self.matrix = RGBMatrix(options=self.options)
 
