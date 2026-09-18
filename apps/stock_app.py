@@ -159,7 +159,7 @@ class StockApp(BaseApp):
             x = int(idx)
             y1 = int(y_graph_max)
             y2 = int(y_graph_max + 1 - prices_pixels[idx])
-            draw.line([[x, y1], [x, y2]], fill=(0,75,0))
+            draw.line([(x, y1), (x, y2)], fill=(0,75,0))
 
         for idx in range(len(prices_pixels) - 1):
             x1 = int(idx)
