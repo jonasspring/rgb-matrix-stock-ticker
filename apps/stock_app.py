@@ -39,17 +39,21 @@ class StockApp(BaseApp):
         self.stock_currencies = {}
 
         self.last_fetch_time = 0
+        self.last_stock_change_time = 0
         self.stock_index = 0
 
         self.font_ticker = ImageFont.truetype("04B_03__.TTF", size=8)
 
     def update_config(self, config):
         self.config = config["stock_app"]
+        self.stock_list = []
+        self.stock_data = {}
+        self.stock_currencies = {}
         self._update_stock_data()
 
     def _update_stock_data(self):
 
-        for stock in self.config["stocks"]:
+        for stock, stock_settings in self.config["stocks"].items():
             stock_ticker = yf.Ticker(stock)
             if self.config["period"] in STOCK_INTERVALS.keys():
                 self.stock_data[stock] = stock_ticker.history(period=self.config["period"], interval=STOCK_INTERVALS[self.config["period"]])
@@ -58,24 +62,30 @@ class StockApp(BaseApp):
 
             self.stock_currencies[stock] = stock_ticker.info.get("currency")
 
-            if stock not in self.stock_list:
+            if stock not in self.stock_list and stock_settings["active"]:
                 self.stock_list.append(stock)
 
         self.last_fetch_time = time.time()
-
     
     def update_data(self):
         """
         Method to fetch current stock prices and to switch to new stocks
+        Returns:
+        - update_image: Boolean whether image should be updated or not
         """
+        update_image = False
+
         current_time = time.time()
         if (current_time - self.last_fetch_time) > self.config["fetch_interval"]:
-
             self._update_stock_data()
+            update_image = True
 
         amount_stocks = len(self.stock_list)
-        if amount_stocks > 1:
+        if amount_stocks > 1 and (current_time - self.last_stock_change_time) > self.config["change_interval_sec"]:
             self.stock_index = (self.stock_index + 1) % amount_stocks
+            self.last_stock_change_time = current_time
+            update_image = True
+        return update_image
 
 
     def render(self)-> Image:
@@ -126,7 +136,8 @@ class StockApp(BaseApp):
 
         # Relative Change
         rel_change_sign = '+' if change_ispos else '-'
-        rel_change_txt = f"{rel_change_sign}{abs(change_pct):.2f}%"
+        #rel_change_txt = f"{rel_change_sign}{abs(change_pct):.2f}%"
+        rel_change_txt = f"{rel_change_sign}{abs(change_pct):.1e}" if abs(change_pct) >= 10000 else f"{rel_change_sign}{abs(change_pct):.2f}%"
         rel_change_color = (0, 255, 0) if change_ispos else (255, 0, 0)
         draw.text((63, 1), rel_change_txt, fill=rel_change_color, font=font_ticker, anchor="rt")
 
