@@ -18,7 +18,8 @@ class DisplayManager(object):
         options.cols = pixel_shape[0]
         options.chain_length = 1
         options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat-pwm' 
+        options.hardware_mapping = 'adafruit-hat-pwm'
+        options.led_rgb_sequence = "RBG"
         options.gpio_slowdown = 2
         options.pwm_bits = 9                            # Hohe Bildwiederholrate
         options.brightness = config["brightness"]       # Helligkeit in %
