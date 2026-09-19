@@ -33,6 +33,9 @@ def update_config():
     st.session_state.config["stock_app"]["change_interval_sec"] = st.session_state.stock_change_interval_sec
     st.session_state.config["stock_app"]["period"] = st.session_state.stock_period_selectbox
     st.session_state.config["stock_app"]["fetch_interval"] = st.session_state.stock_fetch_interval_min * 60
+
+    st.session_state.config["clock_app"]["change_interval_sec"] = st.session_state.clock_change_interval_sec
+    st.session_state.config["clock_app"]["active"] = st.session_state.toggle_clock_app
     
 
 @st.dialog("Select new stock")
@@ -154,15 +157,24 @@ with tab_stocks:
                 st.rerun()
 
 with tab_clock:
-    st.header("Uhr Anzeige")
+    st.header("Clock App")
 
+    st.toggle( "Active", value=st.session_state.config["clock_app"]["active"], 
+              key=f"toggle_clock_app", label_visibility="collapsed", on_change=update_config)
+
+    st.slider("Time for Time/Date (seconds)", min_value=5, max_value=60, value=st.session_state.config["clock_app"]["change_interval_sec"], 
+                  key="clock_change_interval_sec", on_change=update_config)
+
+    #"active": true,
+    #    "change_interval_sec":10,
 # --- TAB 2: WETTER (Beispiel für spätere Erweiterung) ---
 with tab_weather:
-    st.header("Wetter-Anzeige")
+    st.header("Weather App")
+    st.header("Work in progress")
     
     # Platzhalter für Eingaben
-    st.checkbox("Wetter-App aktivieren")
-    st.text_input("Stadt")
+    #st.checkbox("Wetter-App aktivieren")
+    #st.text_input("Stadt")
 
 # --- TAB 3: SYSTEM/EINSTELLUNGEN ---
 with tab_settings:

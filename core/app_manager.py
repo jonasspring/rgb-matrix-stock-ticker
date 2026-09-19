@@ -4,6 +4,7 @@ import json
 import time
 
 from apps.stock_app import StockApp
+from apps.clock_app import ClockApp
 
 def is_raspberry_pi():
     # 1. Prüfen, ob es sich überhaupt um ein Linux-System handelt
@@ -51,10 +52,15 @@ class AppManager(object):
         self.last_app_switch = time.monotonic()
 
         self.apps = {
-            "stock_app": StockApp(config)
+            "stock_app": StockApp(config),
+            "clock_app": ClockApp(config)
         }
 
         self.app_keys = list(self.apps.keys())
+
+        if not config["clock_app"]["active"]:
+            self.app_keys.remove("clock_app")
+
         self.current_app_index = 0
 
         if is_raspberry_pi():
@@ -76,6 +82,12 @@ class AppManager(object):
         self.config = config
         self.config_timestamp = os.path.getmtime('config.json')
         self.apps["stock_app"].update_config(self.config)
+        self.apps["clock_app"].update_config(self.config)
+
+        if config["clock_app"]["active"] and not "clock_app" in self.app_keys:
+            self.app_keys.append("clock_app")
+        elif not config["clock_app"]["active"] and "clock_app" in self.app_keys:
+            self.app_keys.remove("clock_app")
 
         if self.display:
             self.display.update_config(self.config)
@@ -92,11 +104,13 @@ class AppManager(object):
 
             app_switch = False
             if len(self.app_keys) > 1 and start_time - self.last_app_switch > app_change_freq:
-                self.current_app_key = self.apps.keys()[0]
+                self.last_app_switch = start_time
+                self.current_app_key = list(self.apps.keys())[0]
                 self.current_app_index = (self.current_app_index + 1) % len(self.app_keys)
                 app_switch = True
 
             # Update current app
+            self.current_app_index = self.current_app_index % len(self.app_keys)
             app_key = self.app_keys[self.current_app_index]
             current_app = self.apps[app_key]
             update_image = current_app.update_data()
