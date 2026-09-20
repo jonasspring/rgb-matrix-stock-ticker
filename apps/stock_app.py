@@ -21,6 +21,7 @@ CURRENCY_SYMBOLS = {
     "USD": "$",
     "EUR": "€",
     "GBP": "£",
+    "GBp": "£",
     "JPY": "¥",
     "CAD": "CA$",
     "AUD": "A$",
@@ -129,10 +130,17 @@ class StockApp(BaseApp):
         # -------------- Draw Stock image ----------------------
 
         # Stock Name
-        draw.text((1, 0), stock, fill=(255, 255, 255), font=font_ticker)
+        if len(stock) > 7:
+            stock_name = stock[:7]
+        else:
+            stock_name = stock
+        draw.text((1, 0), stock_name, fill=(255, 255, 255), font=font_ticker)
 
         # Stock Price
-        draw.text((1, 8), f"{CURRENCY_SYMBOLS[currency]} {current_price:.2f}", fill=(255, 255, 255), font=font_ticker)
+        if currency in CURRENCY_SYMBOLS.keys():
+            draw.text((1, 8), f"{CURRENCY_SYMBOLS[currency]} {current_price:.2f}", fill=(255, 255, 255), font=font_ticker)
+        else:
+            draw.text((1, 8), f"{currency} {current_price:.2f}", fill=(255, 255, 255), font=font_ticker)
 
         # Relative Change
         rel_change_sign = '+' if change_ispos else '-'
