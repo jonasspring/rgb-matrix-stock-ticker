@@ -2,10 +2,26 @@ import streamlit as st
 import json
 import requests
 import pandas as pd
+from datetime import datetime, time, timedelta
+
+class TimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, time):
+            return obj.isoformat()  # Erzeugt z.B. "07:15:00"
+        return super().default(obj)
+
+def time_decoder(dct):
+    if "dislay_active_time" in dct:
+        # Konvertiert die Liste von Strings zurück in ein Tupel aus time-Objekten
+        dct["dislay_active_time"] = tuple(
+            datetime.strptime(t_str, "%H:%M:%S").time()
+            for t_str in dct["dislay_active_time"]
+        )
+    return dct
 
 def load_config():
     with open("config.json") as f:
-        config = json.load(f)
+        config = json.load(f, object_hook=time_decoder)
     st.session_state.config = config
 
     with open("popular_stocks.json") as f:
@@ -15,7 +31,7 @@ def load_config():
 def save_config():
     try:
         with open("config.json", "w") as f: 
-            json.dump(st.session_state.config, f)
+            json.dump(st.session_state.config, f, cls=TimeEncoder)
         st.toast("Saving successful!")
     except:
         st.error("Saving failed!")
@@ -28,6 +44,9 @@ def save_popular_stocks():
             st.error("Saving failed!")
 
 def update_config():
+    
+    st.session_state.config["display_is_active"] = st.session_state.toggle_display_active
+    st.session_state.config["dislay_active_time"] = st.session_state.active_time_slider
     st.session_state.config["brightness"] = st.session_state.bright_slider
     st.session_state.config["app_change_freq"] = st.session_state.app_change_freq
     st.session_state.config["stock_app"]["change_interval_sec"] = st.session_state.stock_change_interval_sec
@@ -36,6 +55,8 @@ def update_config():
 
     st.session_state.config["clock_app"]["change_interval_sec"] = st.session_state.clock_change_interval_sec
     st.session_state.config["clock_app"]["active"] = st.session_state.toggle_clock_app
+    
+    
     
 
 @st.dialog("Select new stock")
@@ -180,6 +201,19 @@ with tab_weather:
 with tab_settings:
     st.header("General settings")
     #st.info(st.session_state)
+
+    st.toggle( "Activate display", value=st.session_state.config["display_is_active"], 
+                  key=f"toggle_display_active", on_change=update_config)
+
+    dislay_active_time = st.session_state.config.get("dislay_active_time", (time(9, 0), time(17, 0)))
+    st.slider("Select the time during which the display is active (start and stop):",
+        min_value=time(0, 0),
+        max_value=time(23, 59),
+        value=dislay_active_time,
+        step=timedelta(minutes=15),
+        key="active_time_slider",
+        on_change=update_config
+    )
 
     st.slider("☀️ Brightness", 10, 100, key="bright_slider", value=st.session_state.config["brightness"], on_change=update_config)
 

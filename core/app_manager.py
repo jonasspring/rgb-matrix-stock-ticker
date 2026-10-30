@@ -6,6 +6,17 @@ import time
 from apps.stock_app import StockApp
 from apps.clock_app import ClockApp
 
+from datetime import datetime, time, timedelta
+
+def time_decoder(dct):
+    if "dislay_active_time" in dct:
+        # Konvertiert die Liste von Strings zurück in ein Tupel aus time-Objekten
+        dct["dislay_active_time"] = tuple(
+            datetime.strptime(t_str, "%H:%M:%S").time()
+            for t_str in dct["dislay_active_time"]
+        )
+    return dct
+
 def is_raspberry_pi():
     # 1. Prüfen, ob es sich überhaupt um ein Linux-System handelt
     if platform.system() != "Linux":
@@ -77,7 +88,7 @@ class AppManager(object):
     def _update_config(self):
 
         with open("config.json") as f:
-            config = json.load(f)
+            config = json.load(f, object_hook=time_decoder)
 
         self.config = config
         self.config_timestamp = os.path.getmtime('config.json')
@@ -95,39 +106,45 @@ class AppManager(object):
     def main_loop(self):
         while True:
             start_time = time.monotonic()
+            cur_time_dt = datetime.now()
 
             if self._check_config_update():
                 print("Updating config")
                 self._update_config()
 
-            app_change_freq = self.config.get('app_change_freq', 30)
+            display_start_time, display_end_time = self.config['display_active_time']
+            if display_start_time <= cur_time_dt <= display_end_time or not self.config['display_is_active']:
+                self.display.clear_image()
+                time.sleep(10)
+            else:
+                app_change_freq = self.config.get('app_change_freq', 30)
 
-            app_switch = False
-            if len(self.app_keys) > 1 and start_time - self.last_app_switch > app_change_freq:
-                self.last_app_switch = start_time
-                self.current_app_key = list(self.apps.keys())[0]
-                self.current_app_index = (self.current_app_index + 1) % len(self.app_keys)
-                app_switch = True
+                app_switch = False
+                if len(self.app_keys) > 1 and start_time - self.last_app_switch > app_change_freq:
+                    self.last_app_switch = start_time
+                    self.current_app_key = list(self.apps.keys())[0]
+                    self.current_app_index = (self.current_app_index + 1) % len(self.app_keys)
+                    app_switch = True
 
-            # Update current app
-            self.current_app_index = self.current_app_index % len(self.app_keys)
-            app_key = self.app_keys[self.current_app_index]
-            current_app = self.apps[app_key]
-            update_image = current_app.update_data()
-            
-            if app_switch or update_image:
-                img = current_app.render()
+                # Update current app
+                self.current_app_index = self.current_app_index % len(self.app_keys)
+                app_key = self.app_keys[self.current_app_index]
+                current_app = self.apps[app_key]
+                update_image = current_app.update_data()
+                
+                if app_switch or update_image:
+                    img = current_app.render()
 
-                if self.display:
-                    self.display.update_image(img)
-                else:
-                    img.show()
+                    if self.display:
+                        self.display.update_image(img)
+                    else:
+                        img.show()
 
-            elapsed_time = time.monotonic() - start_time
-            sleep_time = self.update_rate - elapsed_time
+                elapsed_time = time.monotonic() - start_time
+                sleep_time = self.update_rate - elapsed_time
 
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
 
 if __name__ == "__main__":
