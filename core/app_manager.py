@@ -6,14 +6,14 @@ import time
 from apps.stock_app import StockApp
 from apps.clock_app import ClockApp
 
-from datetime import datetime, time, timedelta
+from datetime import datetime
 
 def time_decoder(dct):
-    if "dislay_active_time" in dct:
+    if "display_active_time" in dct:
         # Konvertiert die Liste von Strings zurück in ein Tupel aus time-Objekten
-        dct["dislay_active_time"] = tuple(
+        dct["display_active_time"] = tuple(
             datetime.strptime(t_str, "%H:%M:%S").time()
-            for t_str in dct["dislay_active_time"]
+            for t_str in dct["display_active_time"]
         )
     return dct
 
@@ -56,7 +56,7 @@ class AppManager(object):
         with open("config.json") as f:
             config = json.load(f)
 
-        self.config = config
+        self.config = self._load_config()
         self.config_timestamp = os.path.getmtime('config.json')
 
         self.update_rate = 1 # Update rate for the main loop
@@ -85,10 +85,15 @@ class AppManager(object):
         else:
             return False
 
-    def _update_config(self):
-
+    def _load_config(self):
         with open("config.json") as f:
             config = json.load(f, object_hook=time_decoder)
+
+        return config
+
+    def _update_config(self):
+
+        config = self._load_config()
 
         self.config = config
         self.config_timestamp = os.path.getmtime('config.json')
@@ -106,7 +111,7 @@ class AppManager(object):
     def main_loop(self):
         while True:
             start_time = time.monotonic()
-            cur_time_dt = datetime.now()
+            cur_time_dt = datetime.now().time()
 
             if self._check_config_update():
                 print("Updating config")
