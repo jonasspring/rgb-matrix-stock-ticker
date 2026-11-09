@@ -31,8 +31,12 @@ class DisplayManager(object):
         config_changed = config["brightness"] != self.options.brightness
 
         if config_changed:
+            #self.matrix.Clear()
             self.matrix.brightness = config["brightness"]
             self.options.brightness = config["brightness"]
 
     def update_image(self, img):
         self.matrix.SetImage(img.convert("RGB"))
+
+    def clear_image(self):
+        self.matrix.Clear()
