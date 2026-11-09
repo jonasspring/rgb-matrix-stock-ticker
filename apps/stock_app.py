@@ -38,6 +38,7 @@ class StockApp(BaseApp):
         self.stock_list = []
         self.stock_data = {}
         self.stock_currencies = {}
+        self.stock_prev_close = {}
 
         self.last_fetch_time = 0
         self.last_stock_change_time = 0
@@ -50,6 +51,7 @@ class StockApp(BaseApp):
         self.stock_list = []
         self.stock_data = {}
         self.stock_currencies = {}
+        self.stock_prev_close = {}
         self._update_stock_data()
 
     def _update_stock_data(self):
@@ -62,6 +64,7 @@ class StockApp(BaseApp):
                 self.stock_data[stock] = stock_ticker.history(period=self.config["period"])
 
             self.stock_currencies[stock] = stock_ticker.info.get("currency")
+            self.stock_prev_close[stock] = stock_ticker.info.get("regularMarketPreviousClose") or stock_ticker.info.get("previousClose")
 
             if stock not in self.stock_list and stock_settings["active"]:
                 self.stock_list.append(stock)
@@ -109,6 +112,10 @@ class StockApp(BaseApp):
             return None
 
         start_price, current_price = prices[0], prices[-1]
+        if self.config["period"] == "1d" and self.stock_prev_close:
+            prev_close = self.stock_prev_close.get(stock)
+            start_price = prev_close
+
         change_pct = ((current_price - start_price) / start_price) * 100
         change_ispos = change_pct >= 0
 
